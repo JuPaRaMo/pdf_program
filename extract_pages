@@ -1,34 +1,57 @@
-import PyPDF2
+import sys
+import fitz
+from PyPDF2 import PdfReader, PdfWriter
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
-def extract_pages(source_file, page_numbers):
-    pdf_reader = PyPDF2.PdfFileReader(source_file)
-    pdf_writer = PyPDF2.PdfFileWriter()
+def extract_screenshots(pdf_path, output_folder, screenshot_pages, screenshot_regions, dpi=100):
+    doc = fitz.open(pdf_path)
 
-    for page_num in page_numbers:
-        page = pdf_reader.getPage(page_num - 1)  # Adjusting index since page numbers start from 1
-        pdf_writer.addPage(page)
+    for i, page_number in enumerate(screenshot_pages):
+        if page_number <= 0 or page_number > len(doc):
+            print(f"Invalid page number: {page_number}. Skipping screenshot.")
+            continue
 
-    return pdf_writer
+        page = doc[page_number - 1]
+        screenshot_region = screenshot_regions[i] if i < len(screenshot_regions) else None
+
+        if screenshot_region is not None:
+            try:
+                left, top, width, height = map(int, screenshot_region.split(","))
+                matrix = fitz.Matrix(dpi/72, dpi/72)
+                pix = page.get_pixmap(matrix=matrix, clip=(left, top, left+width, top+height))
+                output_path = f"{output_folder}/screenshot_page_{page_number}.png"
+                pix.save(output_path)
+                print(f"Screenshot for page {page_number} saved as {output_path}")
+                add_screenshot_to_pdf(output_path, output_folder, page_number)
+            except Exception as e:
+                print(f"Error capturing screenshot for page {page_number}: {str(e)}")
+
+    doc.close()
     
-def add_pages(target_file, extracted_pdf):
-    with open(target_file, "ab") as output_file:
-        extracted_pdf.write(output_file)
+    print(f"Output PDF file saved as {output_folder}/output.pdf")
 
-def main():
-    source_file = input("Enter the path of the source PDF file: ")
-    target_file = input("Enter the path of the target PDF file: ")
-
-    page_numbers = []
-    while True:
-        page_num = input("Enter a page number to extract (or 'done' to finish): ")
-        if page_num.lower() == "done":
-            break
-        page_numbers.append(int(page_num))
-
-    extracted_pdf = extract_pages(source_file, page_numbers)
-    add_pages(target_file, extracted_pdf)
-
-    print("Pages extracted and added successfully!")
+def add_screenshot_to_pdf(image_path, output_folder, screenshot_number):
+    output_path = f"{output_folder}/output.pdf"
+    c = canvas.Canvas(output_path, pagesize=letter)
+    c.drawImage(image_path, 0, 0)
+    c.save()
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 4:
+        print("Usage: python screenshot_extractor.py <pdf_path> <output_folder> <page1_region> <page2_region> ...")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    output_folder = sys.argv[2]
+    screenshot_pages = []
+    screenshot_regions = []
+
+    for i in range(3, len(sys.argv), 2):
+        try:
+            page_number = int(sys.argv[i])
+            screenshot_pages.append(page_number)
+            screenshot_regions.append(sys.argv[i + 1])
+        except ValueError:
+            print(f"Invalid page number: {sys.argv[i]}. Skipping.")
+extract_screenshots(pdf_path, output_folder, screenshot_pages, screenshot_regions)
