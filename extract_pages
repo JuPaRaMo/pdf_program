@@ -1,57 +1,52 @@
 import sys
-import fitz
-from PyPDF2 import PdfReader, PdfWriter
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from PyPDF2 import PdfReader, PdfWriter, PdfMerger
 
-def extract_screenshots(pdf_path, output_folder, screenshot_pages, screenshot_regions, dpi=100):
-    doc = fitz.open(pdf_path)
+def extract_data_from_pdf(pdf_path):
+    data = []
+    with open(pdf_path, 'rb') as file:
+        pdf_reader = PdfReader(file)
+        for page in pdf_reader.pages:
+            data.append(page.extract_text())
+    return data
 
-    for i, page_number in enumerate(screenshot_pages):
-        if page_number <= 0 or page_number > len(doc):
-            print(f"Invalid page number: {page_number}. Skipping screenshot.")
-            continue
+def replace_text_in_pdf(input_path, output_path, search_text, replacement_text):
+    pdf_writer = PdfWriter()
 
-        page = doc[page_number - 1]
-        screenshot_region = screenshot_regions[i] if i < len(screenshot_regions) else None
+    with open(input_path, 'rb') as input_file:
+        pdf_reader = PdfReader(input_file)
 
-        if screenshot_region is not None:
-            try:
-                left, top, width, height = map(int, screenshot_region.split(","))
-                matrix = fitz.Matrix(dpi/72, dpi/72)
-                pix = page.get_pixmap(matrix=matrix, clip=(left, top, left+width, top+height))
-                output_path = f"{output_folder}/screenshot_page_{page_number}.png"
-                pix.save(output_path)
-                print(f"Screenshot for page {page_number} saved as {output_path}")
-                add_screenshot_to_pdf(output_path, output_folder, page_number)
-            except Exception as e:
-                print(f"Error capturing screenshot for page {page_number}: {str(e)}")
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            modified_text = text.replace(search_text, replacement_text)
 
-    doc.close()
-    
-    print(f"Output PDF file saved as {output_folder}/output.pdf")
+            new_page = pdf_writer.add_blank_page(page.media_box[2], page.media_box[3])  # Use the same page dimensions
+            new_page.merge_page(page)
+            new_page.merge_textfiles(modified_text)  # Merge the modified text content
 
-def add_screenshot_to_pdf(image_path, output_folder, screenshot_number):
-    output_path = f"{output_folder}/output.pdf"
-    c = canvas.Canvas(output_path, pagesize=letter)
-    c.drawImage(image_path, 0, 0)
-    c.save()
+            pdf_writer.add_page(new_page)
 
-if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("Usage: python screenshot_extractor.py <pdf_path> <output_folder> <page1_region> <page2_region> ...")
-        sys.exit(1)
+    with open(output_path, 'wb') as output_file:
+        pdf_writer.write(output_file)
 
-    pdf_path = sys.argv[1]
-    output_folder = sys.argv[2]
-    screenshot_pages = []
-    screenshot_regions = []
+def insert_data_into_pdf(template_path, data, template, output_path):
+    replace_text_in_pdf(source_file, source_file, "Salience Network", "this is the magic")
+    pdf_writer = PdfWriter()
+    merger = PdfMerger()    
+    pdf_writer.append(template, [0])
+    pdf_writer.append(source_file, [7])
+    pdf_writer.append(template, [2])
 
-    for i in range(3, len(sys.argv), 2):
-        try:
-            page_number = int(sys.argv[i])
-            screenshot_pages.append(page_number)
-            screenshot_regions.append(sys.argv[i + 1])
-        except ValueError:
-            print(f"Invalid page number: {sys.argv[i]}. Skipping.")
-extract_screenshots(pdf_path, output_folder, screenshot_pages, screenshot_regions)
+    with open(output_path, 'wb') as output_file:
+        pdf_writer.write(output_file)
+
+# Usage example
+if len(sys.argv) < 4:
+    print("Usage: python script.py source_file.pdf output_file.pdf")
+    sys.exit(1)
+
+source_file = sys.argv[1]
+template = sys.argv[2]
+output_file = sys.argv[3]
+
+data_to_insert = extract_data_from_pdf(source_file)
+insert_data_into_pdf(None, data_to_insert, template,  output_file)
