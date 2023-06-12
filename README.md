@@ -8,8 +8,9 @@
 - Create a folder in C: directory called pdfproject (C:\pdfproject). Inside this folder copy the next files:
   * test2.pdf
   * template.pdf
-  ( You can find these files inside the project)
-- Save the app.py file in the pdfproject folder
+  -  ( You can find these files inside the project)
+  
+- Save the extract_pages.py file in the pdfproject folder
 - In this same folder create another folder called output (C:\pdfproject\output)
 
 
