@@ -9,27 +9,27 @@ def extract_data_from_pdf(pdf_path):
             data.append(page.extract_text())
     return data
 
-def replace_text_in_pdf(input_path, output_path, search_text, replacement_text):
-    pdf_writer = PdfWriter()
+# def replace_text_in_pdf(input_path, output_path, search_text, replacement_text):
+#     pdf_writer = PdfWriter()
 
-    with open(input_path, 'rb') as input_file:
-        pdf_reader = PdfReader(input_file)
+#     with open(input_path, 'rb') as input_file:
+#         pdf_reader = PdfReader(input_file)
 
-        for page in pdf_reader.pages:
-            text = page.extract_text()
-            modified_text = text.replace(search_text, replacement_text)
+#         for page in pdf_reader.pages:
+#             text = page.extract_text()
+#             modified_text = text.replace(search_text, replacement_text)
 
-            new_page = pdf_writer.add_blank_page(page.media_box[2], page.media_box[3])  # Use the same page dimensions
-            new_page.merge_page(page)
-            new_page.merge_textfiles(modified_text)  # Merge the modified text content
+#             new_page = pdf_writer.add_blank_page(page.media_box[2], page.media_box[3])  # Use the same page dimensions
+#             new_page.merge_page(page)
+#             new_page.merge_textfiles(modified_text)  # Merge the modified text content
 
-            pdf_writer.add_page(new_page)
+#             pdf_writer.add_page(new_page)
 
-    with open(output_path, 'wb') as output_file:
-        pdf_writer.write(output_file)
+#     with open(output_path, 'wb') as output_file:
+#         pdf_writer.write(output_file)
 
 def insert_data_into_pdf(template_path, data, template, output_path):
-    replace_text_in_pdf(source_file, source_file, "Salience Network", "this is the magic")
+    #replace_text_in_pdf(source_file, source_file, "Salience Network", "this is the magic")
     pdf_writer = PdfWriter()
     merger = PdfMerger()    
     pdf_writer.append(template, [0])
