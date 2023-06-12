@@ -14,7 +14,7 @@
 - In this same folder create another folder called output (C:\pdfproject\output)
 
 
-![image](https://github.com/JuPaRaMo/pdf_program/assets/30596170/ed70e798-0aaa-44c8-8be5-001ba747e858)
+![image](https://github.com/JuPaRaMo/pdf_program/assets/30596170/9258bd7d-ab0c-4c63-81c0-d7d42e9d2261)
 
  2. Setup python project
 
